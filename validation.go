@@ -97,15 +97,27 @@ func (v *subSchema) validateRecursive(currentSubSchema *subSchema, currentNode i
 	// Check for null value
 	if currentNode == nil {
 		if currentSubSchema.types.IsTyped() && !currentSubSchema.types.Contains(TYPE_NULL) {
-			result.addInternalError(
-				new(InvalidTypeError),
-				context,
-				currentNode,
-				ErrorDetails{
-					"expected": currentSubSchema.types.String(),
-					"given":    TYPE_NULL,
-				},
-			)
+			isRequire := false
+			if currentSubSchema.parent != nil {
+				requireProps := currentSubSchema.parent.required
+				for _, prop := range requireProps {
+					if prop == currentSubSchema.property {
+						isRequire = true
+						break
+					}
+				}
+			}
+			if isRequire {
+				result.addInternalError(
+					new(InvalidTypeError),
+					context,
+					currentNode,
+					ErrorDetails{
+						"expected": currentSubSchema.types.String(),
+						"given":    TYPE_NULL,
+					},
+				)
+			}
 			return
 		}
 
